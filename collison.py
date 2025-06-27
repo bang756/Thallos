@@ -143,7 +143,7 @@ def estimate_distance(h, w, label):
         return -1
 
 # ▶️ YOLO 모델 로드
-model = YOLO("yolov8n.pt")
+#model = YOLO("yolov8n.pt")
 #직접 훈련시킨 최종 모델
 model = YOLO("/home/hkit/Downloads/yolov8_custom14/weights/best.pt")
 
