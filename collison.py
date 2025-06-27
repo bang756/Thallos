@@ -165,7 +165,7 @@ while cap.isOpened():
     # 프레임 크기 축소
     frame = cv2.resize(frame, None, fx=SCALE, fy=SCALE)
 
-    results = model(frame)[0]
+    results = model(frame, conf=0.4)[0] #005
 
     for box in results.boxes:
         x1, y1, x2, y2 = map(int, box.xyxy[0])
