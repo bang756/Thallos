@@ -4,7 +4,7 @@ import socket
 import struct
 import time
 
-SERVER_IP = '192.168.3.28'  # 내 노트북 서버 주소
+SERVER_IP = '-'  # 내 노트북 서버 주소
 PORT = 8888
 
 while True:
