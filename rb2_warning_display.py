@@ -5,7 +5,7 @@ import json
 import cv2
 import numpy as np
 
-SERVER_IP = '192.168.3.28'  # 내 노트북 서버 주소
+SERVER_IP = '-'  # 내 노트북 서버 주소
 PORT = 9999
 
 def receive_object(sock):
