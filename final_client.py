@@ -7,9 +7,12 @@ import time
 import json  # JSON 파싱을 위한 모듈
 
 # --- 설정 ---
-SERVER_IP = '192.168.3.28' #내 노트북 서버 주소
+#SERVER_IP = '192.168.3.28' #내 노트북 서버 주소
+SERVER_IP = '127.0.0.1' #내 노트북 서버 주소
 SERVER_PORT = 7777
+#VIDEO_SOURCE = 'rural_cut.webm'
 VIDEO_SOURCE = 'rural_cut.webm'
+
 resize_width, resize_height = 640, 480 #300
 
 def main():
@@ -59,11 +62,23 @@ def main():
         data = encoded_frame.tobytes()
 
         try:
-            client_socket.sendall(struct.pack('>L', len(data)))
+            #client_socket.sendall(struct.pack('>L', len(data))) # [ min 수정 ] 주석 처리
+            client_socket.sendall(struct.pack('>I', len(data))) # [ min 수정 ]
             client_socket.sendall(data)
 
             # 서버 응답 수신 (4096 바이트 제한)
-            response = client_socket.recv(4096).decode('utf-8')
+            #response = client_socket.recv(4096).decode('utf-8') # [ min 수정 ] 주석 처리
+
+            # [ min 수정 ] 추가 ------------------
+            len_buf = client_socket.recv(4, socket.MSG_WAITALL)
+            if not len_buf:
+                print("WARNING: 서버로부터 응답 길이를 받지 못했습니다.")
+                continue
+            response_len = struct.unpack('>I', len_buf)[0]
+            
+            # 2. 받은 길이만큼만 실제 응답 데이터를 받음
+            response = client_socket.recv(response_len, socket.MSG_WAITALL).decode('utf-8')
+            # [ min 수정 ] 추가 끝 -----------------
 
             # JSON 파싱
             try:
