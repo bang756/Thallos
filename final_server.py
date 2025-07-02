@@ -35,7 +35,7 @@ def estimate_distance(h, w, label):
 
 # YOLO 모델 로드
 model = YOLO("/home/heejin/Documents/Thallos/yolov8_custom14/weights/best.pt")
-model.to('cuda')
+#model.to('cuda')
 
 # ROI의 위쪽/아래쪽 y좌표 및 마스크 포함 임계값 설정 #777
 danger_bottom, danger_top = 360, 300
@@ -143,7 +143,12 @@ while True:
         frame_len = struct.unpack('>I', length_buf)[0]
         frame_data = recvall(conn, frame_len)
         np_arr = np.frombuffer(frame_data, dtype=np.uint8)
-        frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+        #frame = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
+        # ② 디코딩
+        frame = cv2.imdecode(np.frombuffer(frame_data, dtype=np.uint8), cv2.IMREAD_COLOR)
+
+        # [ min 수정 ] 초기화 부분을 위로 올림.
+        danger_objects = []
 
         height, width = frame.shape[:2] # 888 프레임 크기를 기준으로 정확하게 맞춰주기 위함.
 
@@ -186,58 +191,101 @@ while True:
         results = model(frame, conf=0.3)[0]
         boxes = results.boxes #888
         
-        if boxes is None or boxes.xyxy is None: #888
-            danger_objects = []
-        else:
+        # [ min 수정 ] 기존 코드에서 수정함. -------        
+        if boxes is not None and boxes.xyxy is not None:
+            # for 루프가 모든 객체를 순회하도록 아래 로직 전체를 포함시켜야 합니다.
             for i in range(len(boxes)):
                 x1, y1, x2, y2 = map(int, boxes.xyxy[i].tolist())
                 label_id = int(boxes.cls[i].item())
                 label = model.names[label_id]
 
+                # [수정] 아래 로직 전체를 for 루프 안으로 들여쓰기
+                if label not in REAL_HEIGHTS:
+                    continue
+                
+                in_danger = inside_roi((x1, y1, x2, y2), mask_danger, danger_threshold)
+                in_warning = inside_roi((x1, y1, x2, y2), mask_warning, warning_threshold)
+                
+                # ROI 바깥 객체는 무시 (수정된 로직에서는 continue가 루프에 영향을 줌)
+                if not (in_danger or in_warning):
+                    continue
 
+                w, h = x2 - x1, y2 - y1
+                if w <= 0 or h <= 0:
+                    continue
 
+                cx, cy = (x1 + x2) // 2, y2
+                distance = estimate_distance(h, w, label)
 
+                # 전송용 데이터 구성
+                danger_objects.append({
+                    "label": str(label),
+                    "x": int(x1),
+                    "y": int(y1),
+                    "w": int(w),
+                    "h": int(h),
+                    "distance": float(round(distance, 2)),
+                    "zone": "red" if in_danger else "yellow"
+                })
 
-
-            if label not in REAL_HEIGHTS:
-                continue
-            
-            in_danger = inside_roi((x1, y1, x2, y2), mask_danger, danger_threshold) #777
-            in_warning = inside_roi((x1, y1, x2, y2), mask_warning, warning_threshold)
-            if in_danger or in_warning:
+                # 디버깅용 시각화
                 color = (0, 0, 255) if in_danger else (0, 255, 255)
                 cv2.rectangle(frame_output, (x1, y1), (x2, y2), color, 2)
                 cv2.putText(frame_output, label, (x1, y1 - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
-            else:
-                continue  # ROI 바깥 객체는 그리지 않음 #777
+                cv2.circle(frame, (cx, cy), 5, color, -1)
+                cv2.putText(frame, f"{label} {distance:.2f}m", (x1, y1 - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+        
+        # [ min 수정 ] 기존 코드 주석 처리함.
+        # if boxes is None or boxes.xyxy is None: #888
+        #     danger_objects = []
+        #     pass
+        # else:
+        #     for i in range(len(boxes)):
+        #         x1, y1, x2, y2 = map(int, boxes.xyxy[i].tolist())
+        #         label_id = int(boxes.cls[i].item())
+        #         label = model.names[label_id]
+
+        #     if label not in REAL_HEIGHTS:
+        #         continue
+            
+        #     in_danger = inside_roi((x1, y1, x2, y2), mask_danger, danger_threshold) #777
+        #     in_warning = inside_roi((x1, y1, x2, y2), mask_warning, warning_threshold)
+        #     if in_danger or in_warning:
+        #         color = (0, 0, 255) if in_danger else (0, 255, 255)
+        #         cv2.rectangle(frame_output, (x1, y1), (x2, y2), color, 2)
+        #         cv2.putText(frame_output, label, (x1, y1 - 10),
+        #                     cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
+        #     else:
+        #         continue  # ROI 바깥 객체는 그리지 않음 #777
 
 
-            w, h = x2 - x1, y2 - y1
-            if w <= 0 or h <= 0:
-                continue
+        #     w, h = x2 - x1, y2 - y1
+        #     if w <= 0 or h <= 0:
+        #         continue
 
-            cx, cy = (x1 + x2) // 2, y2
+        #     cx, cy = (x1 + x2) // 2, y2
 
-            distance = estimate_distance(h, w, label)
+        #     distance = estimate_distance(h, w, label)
 
-            # 전송용 데이터 구성
-            danger_objects.append({
-                "label": str(label),
-                "x": int(x1),
-                "y": int(y1),
-                "w": int(w),
-                "h": int(h),
-                "distance": float(round(distance, 2)),
-                "zone": "red" if in_danger else "yellow"
-            })
+        #     # 전송용 데이터 구성
+        #     danger_objects.append({
+        #         "label": str(label),
+        #         "x": int(x1),
+        #         "y": int(y1),
+        #         "w": int(w),
+        #         "h": int(h),
+        #         "distance": float(round(distance, 2)),
+        #         "zone": "red" if in_danger else "yellow"
+        #     })
 
-            # 디버깅용 시각화
-            color = (0, 0, 255) if in_danger else (0, 255, 255)
-            cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-            cv2.circle(frame, (cx, cy), 5, color, -1)
-            cv2.putText(frame, f"{label} {distance:.2f}m", (x1, y1 - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+        #     # 디버깅용 시각화
+        #     color = (0, 0, 255) if in_danger else (0, 255, 255)
+        #     cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+        #     cv2.circle(frame, (cx, cy), 5, color, -1)
+        #     cv2.putText(frame, f"{label} {distance:.2f}m", (x1, y1 - 10),
+        #                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
 
         # FPS 측정
@@ -254,7 +302,10 @@ while True:
             print(f"[JSON 직렬화 에러] {e}")
             print("문제가 된 데이터:", danger_objects)
             continue
-        conn.sendall(response_json.encode('utf-8'))
+        #conn.sendall(response_json.encode('utf-8'))
+        payload = response_json.encode('utf-8')
+        conn.sendall(struct.pack('>I', len(payload)))  # 4바이트 길이
+        conn.sendall(payload)
 
         # 디버깅 화면 출력
         # 오버레이 합성 후 디스플레이 #777
