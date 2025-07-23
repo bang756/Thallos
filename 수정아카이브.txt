@@ -1,0 +1,43 @@
+<collision.py>
+2025.06.26 객체인식 모델 + 테스트 동영상 + 위험 폴리곤 (하이브리드 거리 계산)
+2025.06.26 마우스 클릭으로 좌표 찍어서 시각적으로 디버깅 
+2025.06.26 yellow_polygon추가 001
+2025.06.26 초록색으로 모든 객체 잡기 002 - 삭제
+2025.06.27 FPS 측정 코드 (실제 처리 속도 실시간 확인 가능) 003
+2025.06.27 우리가 학습시킨 모델의 클라스 객체의 실제 크기 추가 004
+2025.06.27 YOLO설정 변경 confidence threshold 높이기 (model.predict(conf=0.5)) 005
+2025.06.30 GPU 사용 - PyTorch + CUDA 활성화 006
+(기본적으로 ultralytics 라이브러리에서 model() 함수는 자동으로 GPU를 사용할 수 있지만, 명시적으로 GPU를 활성화하는 방법을 적용)
++ 프레임 간 추론 주기 설정 (2~3프레임마다 YOLO 수행) - 기각
++ 모델 축소	yolov8n → yolov8n-int8 (ONNX or TensorRT로 양자화)
++ 멀티스레딩	비동기식 YOLO 실행 (OpenCV 영상 처리와 병렬)
+
+
+
+<server_receiver.py> - RB2에서 영상 수신, YOLO+차선 인식 수행, 위험 폴리곤 안의 객체 감지 -> 이미지와 메타데이터 보드로 전송
+2025.06.30 GPT기반 코드에서 collision.py코드 추가 #000
+2025.06.30 실제 보드에서 받은 frame을 사용하도록 수정 #100
+2025.06.30 서버에서 ROI로 캡처해서 보드로 보내기 #200
+
+<rb2_client.py>
+- RB2보드에서 USB 카메라 캡처
+- 프레임을 JPEG로 압축 후 서버로 전송
+
+<rb2_warning_display.py>
+- 서버에서 위험 객체 이미지 + 메타데이터 수신
+- 이미지 디코딩 후 경고 시각화.
+
+<mh_client.py>
+- 클라이언트에서 출력되는 창 크기 변경하는 코드 추가 #300
+
+< final_server.py > < m_final_server.py >
+- 경환님 코드 #777
+- 최종 코드 오류 해결 #888
+- 디버깅 코드 #999
+
+<g_final_server.py>
+- 팀장님 수정 부분 #g
+
+<h_final_client.py> : 멀티스레드 추가
+- 프레임 스킵 추가 frame_id % 2 == 0  #h
+- FPS collision버전 적용 #c
