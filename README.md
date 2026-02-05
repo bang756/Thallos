@@ -202,5 +202,3 @@ f = (W_pixel × D) / W_real
 ---
 
 [![Video Label](https://img.youtube.com/vi/zb45s2MPF6U/0.jpg)](https://youtu.be/zb45s2MPF6U)
-
-[![Video Label](https://youtu.be/zb45s2MPF6U.jpg)](https://youtu.be/zb45s2MPF6U)
