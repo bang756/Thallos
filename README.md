@@ -194,11 +194,4 @@ f = (W_pixel × D) / W_real
 
 ---
 
-## 8. 한 줄 요약
-
-객체 인식 모델 구현보다,  
-실제 시스템에서 안정적으로 동작하게 만드는 과정이 더 어렵다는 것을 체감한 프로젝트
-
----
-
 [![Video Label](https://img.youtube.com/vi/zb45s2MPF6U/0.jpg)](https://youtu.be/zb45s2MPF6U)
