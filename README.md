@@ -2,6 +2,9 @@
 
 YOLOv8 기반 객체 인식 및 충돌 감지 파이프라인 구현
 
+## 시연 영상
+
+[![Video Label](https://img.youtube.com/vi/zb45s2MPF6U/0.jpg)](https://youtu.be/zb45s2MPF6U)
 ---
 
 ## 1. 프로젝트 개요
@@ -191,9 +194,3 @@ f = (W_pixel × D) / W_real
   (YOLO 기반 차선 인식, SCNN, ENet, LaneNet 등)
 - 카메라 캘리브레이션을 통한 거리 추정 정확도 향상
 - 센서 퓨전 구조로 확장 가능성 검토
-
----
-
-## 8. 시연 영상
-
-[![Video Label](https://img.youtube.com/vi/zb45s2MPF6U/0.jpg)](https://youtu.be/zb45s2MPF6U)
